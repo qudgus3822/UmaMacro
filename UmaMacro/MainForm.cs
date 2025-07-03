@@ -5,35 +5,42 @@ namespace UmaMacro
 {
     public partial class MainForm : Form
     {
-        // WinAPI �Լ� ����
+        // WinAPI 함수 선언
         [DllImport("user32.dll")]
         private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
         [DllImport("user32.dll")]
         private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
-        private const int HOTKEY_ID_Space = 1; // ��Ű ID
-        private const int HOTKEY_ID_Q = 2; // ��Ű ID
-        private const int HOTKEY_ID_W = 3; // ��Ű ID
-        private const int HOTKEY_ID_E = 4; // ��Ű ID
-        private const int HOTKEY_ID_R = 5; // ��Ű ID
-        private const int HOTKEY_ID_T = 6; // ��Ű ID
-        private const int HOTKEY_ID_Y = 7; // ��Ű ID
-        private const int HOTKEY_ID_F12 = 8; // ��Ű ID
-        private const uint MOD_NONE = 0x0000; // ���� Ű ����
-        private const uint VK_SPACE = 0x20;  // Space Ű
+        private const int HOTKEY_ID_Space = 1; // 핫키 ID
+        private const int HOTKEY_ID_Q = 2; // 핫키 ID
+        private const int HOTKEY_ID_W = 3; // 핫키 ID
+        private const int HOTKEY_ID_E = 4; // 핫키 ID
+        private const int HOTKEY_ID_R = 5; // 핫키 ID
+        private const int HOTKEY_ID_T = 6; // 핫키 ID
+        private const int HOTKEY_ID_Y = 7; // 핫키 ID
+        private const int HOTKEY_ID_BACKTICK = 8; // 핫키 ID (` 키)
+        private const uint MOD_NONE = 0x0000; // 보조 키 없음
+        private const uint VK_SPACE = 0x20;  // Space 키
         private const uint VK_Q = 0x51;
         private const uint VK_W = 0x57;
         private const uint VK_E = 0x45;
         private const uint VK_R = 0x52;
         private const uint VK_T = 0x54;
         private const uint VK_Y = 0x59;
-        private const uint VK_F12 = 0x7B;
+        private const uint VK_BACKTICK = 0xC0; // ` 키 (백틱)
         private bool isActive = false;
+        
+        // 29분 타이머 관련 변수 추가
+        private System.Windows.Forms.Timer autoClickTimer;
+        // private const int AUTO_CLICK_INTERVAL = 29 * 60 * 1000; // 29분을 밀리초로 변환
+        //확인을 위해 1초로 변경
+        private const int AUTO_CLICK_INTERVAL = 3000; // 1초
+
         [DllImport("kernel32.dll")]
         static extern bool AllocConsole();
 
-        // POINT ����ü ���� (���콺 ��ǥ ����)
+        // POINT 구조체 정의 (마우스 좌표 저장)
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT
         {
@@ -45,52 +52,105 @@ namespace UmaMacro
         public MainForm()
         {
             InitializeComponent();
-            //AllocConsole(); // �ܼ� â Ȱ��ȭ
+            AllocConsole(); // 콘솔 창 활성화 (디버깅용)
 
-            label1.Text = isActive ? "Ȱ��" : "��Ȱ��";
+            label1.Text = isActive ? "활성" : "비활성";
+            
+            // 29분 타이머 초기화
+            InitializeAutoClickTimer();
+            
+            // 폼이 로드된 후 핫키 등록
+            this.Load += MainForm_Load;
+        }
+        
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            // ` 핫키는 항상 등록되어야 함 (활성/비활성 토글용)
+            bool hotKeyRegistered = RegisterHotKey(this.Handle, HOTKEY_ID_BACKTICK, MOD_NONE, VK_BACKTICK);
+            if (!hotKeyRegistered)
+            {
+                // ` 키 등록 실패 시 메시지 표시
+                MessageBox.Show("` 핫키 등록에 실패했습니다. 다른 프로그램에서 ` 키를 사용 중일 수 있습니다.\n" +
+                              "` 키 대신 버튼을 클릭해서 활성/비활성을 변경하세요.", "핫키 등록 실패", 
+                              MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+        
+        private void InitializeAutoClickTimer()
+        {
+            autoClickTimer = new System.Windows.Forms.Timer();
+            autoClickTimer.Interval = AUTO_CLICK_INTERVAL; // 29분
+            autoClickTimer.Tick += AutoClickTimer_Tick;
+        }
+        
+        private void AutoClickTimer_Tick(object sender, EventArgs e)
+        {
+            // 프로그램이 활성화되어 있을 때만 자동 클릭 수행
+            if (isActive)
+            {
+                // Q키와 동일한 동작 수행 (787, 800 좌표 클릭)
+                PerformClickAction(787, 800);
+            }
         }
 
         protected override void WndProc(ref Message m)
         {
-            const int WM_HOTKEY = 0x0312; // ��Ű �޽���
-            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_Space)
+            const int WM_HOTKEY = 0x0312; // 핫키 메시지
+            
+            // 핫키 메시지 디버깅
+            if (m.Msg == WM_HOTKEY)
             {
-                PerformClickAction(949, 751); // Space Ű�� ������ �� ������ ����
-
+                Console.WriteLine($"핫키 메시지 받음: ID={m.WParam.ToInt32()}");
             }
-            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_Q)
+            
+            // ` 키는 항상 처리 (활성/비활성 토글)
+            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_BACKTICK)
             {
-                PerformClickAction(787, 800); // Space Ű�� ������ �� ������ ����
-
-            }
-            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_W)
-            {
-                PerformClickAction(863, 800); // Space Ű�� ������ �� ������ ����
-
-            }
-            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_E)
-            {
-                PerformClickAction(927, 800); // Space Ű�� ������ �� ������ ����
-
-            }
-            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_R)
-            {
-                PerformClickAction(1001, 803); // Space Ű�� ������ �� ������ ����
-
-            }
-            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_T)
-            {
-                PerformClickAction(1052, 799); // Space Ű�� ������ �� ������ ����
-
-            }
-            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_Y)
-            {
-                PerformClickAction(1126, 800); // Space Ű�� ������ �� ������ ����
-
-            }
-            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_F12)
-            {
+                Console.WriteLine("` 키 눌림 감지!");
                 isActive = !isActive;
+                label1.Text = isActive ? "활성" : "비활성";
+                if (isActive)
+                {
+                    StartHook();
+                    autoClickTimer.Start(); // 29분 타이머 시작
+                }
+                else
+                {
+                    ReleaseHook();
+                    autoClickTimer.Stop(); // 29분 타이머 정지
+                }
+            }
+            // 다른 핫키들은 활성 상태일 때만 동작
+            else if (m.Msg == WM_HOTKEY && isActive)
+            {
+                if (m.WParam.ToInt32() == HOTKEY_ID_Space)
+                {
+                    PerformClickAction(949, 751);
+                }
+                else if (m.WParam.ToInt32() == HOTKEY_ID_Q)
+                {
+                    PerformClickAction(787, 800);
+                }
+                else if (m.WParam.ToInt32() == HOTKEY_ID_W)
+                {
+                    PerformClickAction(863, 800);
+                }
+                else if (m.WParam.ToInt32() == HOTKEY_ID_E)
+                {
+                    PerformClickAction(927, 800);
+                }
+                else if (m.WParam.ToInt32() == HOTKEY_ID_R)
+                {
+                    PerformClickAction(1001, 803);
+                }
+                else if (m.WParam.ToInt32() == HOTKEY_ID_T)
+                {
+                    PerformClickAction(1052, 799);
+                }
+                else if (m.WParam.ToInt32() == HOTKEY_ID_Y)
+                {
+                    PerformClickAction(1126, 800);
+                }
             }
             base.WndProc(ref m);
         }
@@ -98,27 +158,30 @@ namespace UmaMacro
         private async void PerformClickAction(int x, int y)
         {
 
-                GetCursorPos(out POINT point);
-                SetCursorPos(x, y);
+            GetCursorPos(out POINT point);
+            SetCursorPos(x, y);
 
-                // ���콺 Ŭ�� �̺�Ʈ �ùķ��̼�
-                mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
-                mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
-                await Task.Delay(50);
+            // 마우스 클릭 이벤트 시뮬레이션
+            mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+            mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+            await Task.Delay(50);
 
-                SetCursorPos(point.X, point.Y);
-            
+            SetCursorPos(point.X, point.Y);
+
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             ReleaseHook();
+            UnregisterHotKey(this.Handle, HOTKEY_ID_BACKTICK); // ` 핫키 해제
+            autoClickTimer?.Stop(); // 타이머 정지
+            autoClickTimer?.Dispose(); // 타이머 리소스 해제
             base.OnFormClosing(e);
         }
 
         protected void StartHook()
         {
-            // �� �ε� �� �۷ι� ��Ű ���
+            // 다른 핫키들만 등록 (F12는 이미 생성자에서 등록됨)
             RegisterHotKey(this.Handle, HOTKEY_ID_Space, MOD_NONE, VK_SPACE);
             RegisterHotKey(this.Handle, HOTKEY_ID_Q, MOD_NONE, VK_Q);
             RegisterHotKey(this.Handle, HOTKEY_ID_W, MOD_NONE, VK_W);
@@ -126,14 +189,13 @@ namespace UmaMacro
             RegisterHotKey(this.Handle, HOTKEY_ID_R, MOD_NONE, VK_R);
             RegisterHotKey(this.Handle, HOTKEY_ID_T, MOD_NONE, VK_T);
             RegisterHotKey(this.Handle, HOTKEY_ID_Y, MOD_NONE, VK_Y);
-            RegisterHotKey(this.Handle, HOTKEY_ID_F12, MOD_NONE, VK_F12);
 
-            // �� �ε� �� �۷ι� ���콺 ��ŷ ����
+            // 마우스 후킹 등록
             _hookID = SetHook(_proc);
         }
         protected void ReleaseHook()
         {
-            // �� ���� �� ��Ű ����
+            // 다른 핫키들만 해제 (F12는 항상 등록되어 있어야 함)
             UnregisterHotKey(this.Handle, HOTKEY_ID_Space);
             UnregisterHotKey(this.Handle, HOTKEY_ID_Q);
             UnregisterHotKey(this.Handle, HOTKEY_ID_W);
@@ -141,12 +203,11 @@ namespace UmaMacro
             UnregisterHotKey(this.Handle, HOTKEY_ID_R);
             UnregisterHotKey(this.Handle, HOTKEY_ID_T);
             UnregisterHotKey(this.Handle, HOTKEY_ID_Y);
-            UnregisterHotKey(this.Handle, HOTKEY_ID_F12);
-            // �� ���� �� ��ŷ ����
-            UnhookWindowsHookEx(_hookID); // ��ŷ ����
+            // 마우스 후킹 해제
+            UnhookWindowsHookEx(_hookID);
         }
 
-        // WinAPI �Լ� ����
+        // WinAPI 함수 선언
         [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int X, int Y);
 
@@ -162,7 +223,7 @@ namespace UmaMacro
         private static IntPtr _hookID = IntPtr.Zero;
         private static HookProc _proc = HookCallback;
 
-        // ��ŷ�� �����ϱ� ���� ��������Ʈ
+        // 핫키 후킹 콜백 함수 선언
         private delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         // Windows API Import
@@ -178,8 +239,8 @@ namespace UmaMacro
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
 
-        private const int WH_MOUSE_LL = 14; // �۷ι� ���콺 ��ŷ
-        private const int WM_LBUTTONDOWN = 0x0201; // ���콺 ���� Ŭ��
+        private const int WH_MOUSE_LL = 14; // 핫키 후킹 등록
+        private const int WM_LBUTTONDOWN = 0x0201; // 좌클릭 마우스 함수
 
 
         private static IntPtr SetHook(HookProc proc)
@@ -195,12 +256,12 @@ namespace UmaMacro
         {
             if (nCode >= 0 && wParam == (IntPtr)WM_LBUTTONDOWN)
             {
-                // ���콺 Ŭ�� ��ǥ ��������
+                // 좌클릭 마우스 좌표 출력
                 MSLLHOOKSTRUCT hookStruct = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
                 int x = hookStruct.pt.X;
                 int y = hookStruct.pt.Y;
 
-                // �޽��� �ڽ� ǥ��
+                // 핫키 메시지 출력
                 Console.WriteLine($"Mouse clicked at: X={x}, Y={y}");
             }
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
@@ -209,16 +270,18 @@ namespace UmaMacro
         private void button1_Click(object sender, EventArgs e)
         {
             isActive = !isActive;
-            label1.Text = isActive ? "Ȱ��" : "��Ȱ��";
+            label1.Text = isActive ? "활성" : "비활성";
             if (isActive)
             {
                 StartHook();
+                autoClickTimer.Start(); // 29분 타이머 시작
             }
             else
             {
                 ReleaseHook();
+                autoClickTimer.Stop(); // 29분 타이머 정지
             }
-            
+
         }
 
         [StructLayout(LayoutKind.Sequential)]

@@ -5,22 +5,22 @@ namespace UmaMacro
 {
     public partial class MainForm : Form
     {
-        // WinAPI ÇÔ¼ö Á¤ÀÇ
+        // WinAPI ï¿½Ô¼ï¿½ ï¿½ï¿½ï¿½ï¿½
         [DllImport("user32.dll")]
         private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
         [DllImport("user32.dll")]
         private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
-        private const int HOTKEY_ID_Space = 1; // ÇÖÅ° ID
-        private const int HOTKEY_ID_Q = 2; // ÇÖÅ° ID
-        private const int HOTKEY_ID_W = 3; // ÇÖÅ° ID
-        private const int HOTKEY_ID_E = 4; // ÇÖÅ° ID
-        private const int HOTKEY_ID_R = 5; // ÇÖÅ° ID
-        private const int HOTKEY_ID_T = 6; // ÇÖÅ° ID
-        private const int HOTKEY_ID_Y = 7; // ÇÖÅ° ID
-        private const int HOTKEY_ID_F12 = 8; // ÇÖÅ° ID
-        private const uint MOD_NONE = 0x0000; // ¼öÁ¤ Å° ¾øÀ½
+        private const int HOTKEY_ID_Space = 1; // ï¿½ï¿½Å° ID
+        private const int HOTKEY_ID_Q = 2; // ï¿½ï¿½Å° ID
+        private const int HOTKEY_ID_W = 3; // ï¿½ï¿½Å° ID
+        private const int HOTKEY_ID_E = 4; // ï¿½ï¿½Å° ID
+        private const int HOTKEY_ID_R = 5; // ï¿½ï¿½Å° ID
+        private const int HOTKEY_ID_T = 6; // ï¿½ï¿½Å° ID
+        private const int HOTKEY_ID_Y = 7; // ï¿½ï¿½Å° ID
+        private const int HOTKEY_ID_F12 = 8; // ï¿½ï¿½Å° ID
+        private const uint MOD_NONE = 0x0000; // ï¿½ï¿½ï¿½ï¿½ Å° ï¿½ï¿½ï¿½ï¿½
         private const uint VK_SPACE = 0x20;  // Space Å°
         private const uint VK_Q = 0x51;
         private const uint VK_W = 0x57;
@@ -33,7 +33,7 @@ namespace UmaMacro
         [DllImport("kernel32.dll")]
         static extern bool AllocConsole();
 
-        // POINT ±¸Á¶Ã¼ ¼±¾ð (¸¶¿ì½º ÁÂÇ¥ ÀúÀå)
+        // POINT ï¿½ï¿½ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ì½º ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½)
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT
         {
@@ -45,47 +45,47 @@ namespace UmaMacro
         public MainForm()
         {
             InitializeComponent();
-            //AllocConsole(); // ÄÜ¼Ö Ã¢ È°¼ºÈ­
+            //AllocConsole(); // ï¿½Ü¼ï¿½ Ã¢ È°ï¿½ï¿½È­
 
-            label1.Text = isActive ? "È°¼º" : "ºñÈ°¼º";
+            label1.Text = isActive ? "È°ï¿½ï¿½" : "ï¿½ï¿½È°ï¿½ï¿½";
         }
 
         protected override void WndProc(ref Message m)
         {
-            const int WM_HOTKEY = 0x0312; // ÇÖÅ° ¸Þ½ÃÁö
+            const int WM_HOTKEY = 0x0312; // ï¿½ï¿½Å° ï¿½Þ½ï¿½ï¿½ï¿½
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_Space)
             {
-                PerformClickAction(949, 751); // Space Å°°¡ ´­·ÈÀ» ¶§ ½ÇÇàÇÒ µ¿ÀÛ
+                PerformClickAction(949, 751); // Space Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             }
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_Q)
             {
-                PerformClickAction(787, 800); // Space Å°°¡ ´­·ÈÀ» ¶§ ½ÇÇàÇÒ µ¿ÀÛ
+                PerformClickAction(787, 800); // Space Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             }
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_W)
             {
-                PerformClickAction(863, 800); // Space Å°°¡ ´­·ÈÀ» ¶§ ½ÇÇàÇÒ µ¿ÀÛ
+                PerformClickAction(863, 800); // Space Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             }
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_E)
             {
-                PerformClickAction(927, 800); // Space Å°°¡ ´­·ÈÀ» ¶§ ½ÇÇàÇÒ µ¿ÀÛ
+                PerformClickAction(927, 800); // Space Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             }
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_R)
             {
-                PerformClickAction(1001, 803); // Space Å°°¡ ´­·ÈÀ» ¶§ ½ÇÇàÇÒ µ¿ÀÛ
+                PerformClickAction(1001, 803); // Space Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             }
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_T)
             {
-                PerformClickAction(1052, 799); // Space Å°°¡ ´­·ÈÀ» ¶§ ½ÇÇàÇÒ µ¿ÀÛ
+                PerformClickAction(1052, 799); // Space Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             }
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_Y)
             {
-                PerformClickAction(1126, 800); // Space Å°°¡ ´­·ÈÀ» ¶§ ½ÇÇàÇÒ µ¿ÀÛ
+                PerformClickAction(1126, 800); // Space Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             }
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_F12)
@@ -101,7 +101,7 @@ namespace UmaMacro
                 GetCursorPos(out POINT point);
                 SetCursorPos(x, y);
 
-                // ¸¶¿ì½º Å¬¸¯ ÀÌº¥Æ® ½Ã¹Ä·¹ÀÌ¼Ç
+                // ï¿½ï¿½ï¿½ì½º Å¬ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½Ã¹Ä·ï¿½ï¿½Ì¼ï¿½
                 mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
                 mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
                 await Task.Delay(50);
@@ -118,7 +118,7 @@ namespace UmaMacro
 
         protected void StartHook()
         {
-            // Æû ·Îµå ½Ã ±Û·Î¹ú ÇÖÅ° µî·Ï
+            // ï¿½ï¿½ ï¿½Îµï¿½ ï¿½ï¿½ ï¿½Û·Î¹ï¿½ ï¿½ï¿½Å° ï¿½ï¿½ï¿½
             RegisterHotKey(this.Handle, HOTKEY_ID_Space, MOD_NONE, VK_SPACE);
             RegisterHotKey(this.Handle, HOTKEY_ID_Q, MOD_NONE, VK_Q);
             RegisterHotKey(this.Handle, HOTKEY_ID_W, MOD_NONE, VK_W);
@@ -128,12 +128,12 @@ namespace UmaMacro
             RegisterHotKey(this.Handle, HOTKEY_ID_Y, MOD_NONE, VK_Y);
             RegisterHotKey(this.Handle, HOTKEY_ID_F12, MOD_NONE, VK_F12);
 
-            // Æû ·Îµå ½Ã ±Û·Î¹ú ¸¶¿ì½º ÈÄÅ· ¼³Á¤
+            // ï¿½ï¿½ ï¿½Îµï¿½ ï¿½ï¿½ ï¿½Û·Î¹ï¿½ ï¿½ï¿½ï¿½ì½º ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½
             _hookID = SetHook(_proc);
         }
         protected void ReleaseHook()
         {
-            // Æû Á¾·á ½Ã ÇÖÅ° ÇØÁ¦
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Å° ï¿½ï¿½ï¿½ï¿½
             UnregisterHotKey(this.Handle, HOTKEY_ID_Space);
             UnregisterHotKey(this.Handle, HOTKEY_ID_Q);
             UnregisterHotKey(this.Handle, HOTKEY_ID_W);
@@ -142,11 +142,11 @@ namespace UmaMacro
             UnregisterHotKey(this.Handle, HOTKEY_ID_T);
             UnregisterHotKey(this.Handle, HOTKEY_ID_Y);
             UnregisterHotKey(this.Handle, HOTKEY_ID_F12);
-            // Æû Á¾·á ½Ã ÈÄÅ· ÇØÁ¦
-            UnhookWindowsHookEx(_hookID); // ÈÄÅ· ÇØÁ¦
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½
+            UnhookWindowsHookEx(_hookID); // ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½
         }
 
-        // WinAPI ÇÔ¼ö Á¤ÀÇ
+        // WinAPI ï¿½Ô¼ï¿½ ï¿½ï¿½ï¿½ï¿½
         [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int X, int Y);
 
@@ -162,7 +162,7 @@ namespace UmaMacro
         private static IntPtr _hookID = IntPtr.Zero;
         private static HookProc _proc = HookCallback;
 
-        // ÈÄÅ·À» ¼³Á¤ÇÏ±â À§ÇÑ µ¨¸®°ÔÀÌÆ®
+        // ï¿½ï¿½Å·ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
         private delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         // Windows API Import
@@ -178,8 +178,8 @@ namespace UmaMacro
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
 
-        private const int WH_MOUSE_LL = 14; // ±Û·Î¹ú ¸¶¿ì½º ÈÄÅ·
-        private const int WM_LBUTTONDOWN = 0x0201; // ¸¶¿ì½º ¿ÞÂÊ Å¬¸¯
+        private const int WH_MOUSE_LL = 14; // ï¿½Û·Î¹ï¿½ ï¿½ï¿½ï¿½ì½º ï¿½ï¿½Å·
+        private const int WM_LBUTTONDOWN = 0x0201; // ï¿½ï¿½ï¿½ì½º ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½
 
 
         private static IntPtr SetHook(HookProc proc)
@@ -195,12 +195,12 @@ namespace UmaMacro
         {
             if (nCode >= 0 && wParam == (IntPtr)WM_LBUTTONDOWN)
             {
-                // ¸¶¿ì½º Å¬¸¯ ÁÂÇ¥ °¡Á®¿À±â
+                // ï¿½ï¿½ï¿½ì½º Å¬ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 MSLLHOOKSTRUCT hookStruct = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
                 int x = hookStruct.pt.X;
                 int y = hookStruct.pt.Y;
 
-                // ¸Þ½ÃÁö ¹Ú½º Ç¥½Ã
+                // ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Ú½ï¿½ Ç¥ï¿½ï¿½
                 Console.WriteLine($"Mouse clicked at: X={x}, Y={y}");
             }
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
@@ -209,7 +209,7 @@ namespace UmaMacro
         private void button1_Click(object sender, EventArgs e)
         {
             isActive = !isActive;
-            label1.Text = isActive ? "È°¼º" : "ºñÈ°¼º";
+            label1.Text = isActive ? "È°ï¿½ï¿½" : "ï¿½ï¿½È°ï¿½ï¿½";
             if (isActive)
             {
                 StartHook();

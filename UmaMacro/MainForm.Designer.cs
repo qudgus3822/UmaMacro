@@ -40,7 +40,7 @@
             button1.TabIndex = 0;
             button1.Text = "활성/비활성";
             button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            button1.Click += ToggleButton_Click;
             // 
             // label1
             // 

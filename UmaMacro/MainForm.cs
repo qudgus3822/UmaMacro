@@ -90,6 +90,9 @@ namespace UmaMacro
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            // 2025-07-25, 김병현 수정 - 폼 로드 후 아이콘 재설정
+            SetFormIcon();
+            
             // ` 핫키는 항상 등록되어야 함 (활성/비활성 토글용)
             bool hotKeyRegistered = RegisterHotKey(this.Handle, HOTKEY_ID_BACKTICK, MOD_NONE, VK_BACKTICK);
             if (!hotKeyRegistered)
@@ -98,6 +101,25 @@ namespace UmaMacro
                 MessageBox.Show("` 핫키 등록에 실패했습니다. 다른 프로그램에서 ` 키를 사용 중일 수 있습니다.\n" +
                               "` 키 대신 버튼을 클릭해서 활성/비활성을 변경하세요.", "핫키 등록 실패",
                               MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+        
+        // 2025-07-25, 김병현 수정 - 폼 아이콘 설정 메서드 분리
+        private void SetFormIcon()
+        {
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                using var stream = assembly.GetManifestResourceStream("UmaMacro.images.watermelon.png");
+                if (stream != null)
+                {
+                    using var bitmap = new Bitmap(stream);
+                    this.Icon = Icon.FromHandle(bitmap.GetHicon());
+                }
+            }
+            catch
+            {
+                this.Icon = SystemIcons.Application;
             }
         }
 
@@ -503,6 +525,7 @@ namespace UmaMacro
             this.Visible = true;
             this.WindowState = FormWindowState.Normal;
             this.ShowInTaskbar = true;
+            SetFormIcon(); // 폼 표시 시 아이콘 재설정
             this.Activate();
         }
 

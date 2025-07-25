@@ -434,8 +434,28 @@ namespace UmaMacro
         // 2025-07-25, 김병현 수정 - 트레이 아이콘 설정
         private void SetupTrayIcon()
         {
-            // 기본 아이콘 설정 (시스템 아이콘 사용)
-            notifyIcon1.Icon = SystemIcons.Application;
+            // 2025-07-25, 김병현 수정 - watermelon.png 아이콘 설정
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                using var stream = assembly.GetManifestResourceStream("UmaMacro.images.watermelon.png");
+                if (stream != null)
+                {
+                    using var bitmap = new Bitmap(stream);
+                    notifyIcon1.Icon = Icon.FromHandle(bitmap.GetHicon());
+                }
+                else
+                {
+                    // 리소스를 찾을 수 없으면 기본 아이콘 사용
+                    notifyIcon1.Icon = SystemIcons.Application;
+                }
+            }
+            catch
+            {
+                // 오류 발생 시 기본 아이콘 사용
+                notifyIcon1.Icon = SystemIcons.Application;
+            }
+            
             UpdateTrayIcon();
             
             // 시작 시 트레이로 최소화

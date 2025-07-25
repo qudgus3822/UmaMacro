@@ -24,4 +24,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="images\watermelon.png" />
+  </ItemGroup>
+
 </Project>

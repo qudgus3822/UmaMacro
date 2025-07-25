@@ -442,18 +442,26 @@ namespace UmaMacro
                 if (stream != null)
                 {
                     using var bitmap = new Bitmap(stream);
-                    notifyIcon1.Icon = Icon.FromHandle(bitmap.GetHicon());
+                    var icon = Icon.FromHandle(bitmap.GetHicon());
+                    
+                    // 트레이 아이콘 설정
+                    notifyIcon1.Icon = icon;
+                    
+                    // 윈폼 아이콘도 동일하게 설정
+                    this.Icon = icon;
                 }
                 else
                 {
                     // 리소스를 찾을 수 없으면 기본 아이콘 사용
                     notifyIcon1.Icon = SystemIcons.Application;
+                    this.Icon = SystemIcons.Application;
                 }
             }
             catch
             {
                 // 오류 발생 시 기본 아이콘 사용
                 notifyIcon1.Icon = SystemIcons.Application;
+                this.Icon = SystemIcons.Application;
             }
             
             UpdateTrayIcon();

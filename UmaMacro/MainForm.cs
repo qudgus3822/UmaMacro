@@ -1,12 +1,13 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace UmaMacro
 {
     public partial class MainForm : Form
     {
         #region WinAPI 선언
-        
+
         // 핵키 관련 API
         [DllImport("user32.dll")]
         private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
@@ -32,26 +33,24 @@ namespace UmaMacro
         private const uint VK_Y = 0x59;
         private const uint VK_BACKTICK = 0xC0; // ` 키 (백틱)
         private bool isActive = false;
-        
-        // 29분 타이머 관련 변수 추가
         private System.Windows.Forms.Timer autoClickTimer;
-        // private const int AUTO_CLICK_INTERVAL = 29 * 60 * 1000; // 29분을 밀리초로 변환
-        //확인을 위해 1초로 변경
-        private const int AUTO_CLICK_INTERVAL = 3000; // 1초
-        
+
         // 2025-07-18, 김병현 수정 - Debug/Release 모드별 비활성 자동 활성화 기능
         private System.Windows.Forms.Timer inactivityTimer;
-        
+
 #if DEBUG
+
         // Debug 모드: 1초마다 체크, 3초 이상 비활성 시 자동 활성화
         private const int INACTIVITY_CHECK_INTERVAL = 1000; // 1초
         private const int INACTIVITY_TIMEOUT = 3 * 1000; // 3초
+        private const int AUTO_CLICK_INTERVAL = 3000; // 3초
 #else
         // Release 모드: 5분마다 체크, 15분 이상 비활성 시 자동 활성화
         private const int INACTIVITY_CHECK_INTERVAL = 5 * 60 * 1000; // 5분
         private const int INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15분
+        private const int AUTO_CLICK_INTERVAL = 10 * 60 * 1000; // 10분
 #endif
-        
+
         private DateTime lastInputTime;
 
         [DllImport("kernel32.dll")]
@@ -69,20 +68,26 @@ namespace UmaMacro
         public MainForm()
         {
             InitializeComponent();
+            
+#if DEBUG
             AllocConsole(); // 콘솔 창 활성화 (디버깅용)
+#endif
 
             label1.Text = isActive ? "활성" : "비활성";
-            
-            // 29분 타이머 초기화
+
+            // 2025-07-25, 김병현 수정 - 트레이 아이콘 설정
+            SetupTrayIcon();
+
+            // 타이머 초기화 
             InitializeAutoClickTimer();
-            
+
             // 2025-07-18, 김병현 수정 - 비활성 타이머 초기화
             InitializeInactivityTimer();
-            
+
             // 폼이 로드된 후 핫키 등록
             this.Load += MainForm_Load;
         }
-        
+
         private void MainForm_Load(object sender, EventArgs e)
         {
             // ` 핫키는 항상 등록되어야 함 (활성/비활성 토글용)
@@ -91,18 +96,18 @@ namespace UmaMacro
             {
                 // ` 키 등록 실패 시 메시지 표시
                 MessageBox.Show("` 핫키 등록에 실패했습니다. 다른 프로그램에서 ` 키를 사용 중일 수 있습니다.\n" +
-                              "` 키 대신 버튼을 클릭해서 활성/비활성을 변경하세요.", "핫키 등록 실패", 
+                              "` 키 대신 버튼을 클릭해서 활성/비활성을 변경하세요.", "핫키 등록 실패",
                               MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
-        
+
         private void InitializeAutoClickTimer()
         {
             autoClickTimer = new System.Windows.Forms.Timer();
-            autoClickTimer.Interval = AUTO_CLICK_INTERVAL; // 29분
+            autoClickTimer.Interval = AUTO_CLICK_INTERVAL;
             autoClickTimer.Tick += AutoClickTimer_Tick;
         }
-        
+
         // 2025-07-18, 김병현 수정 - Debug/Release 모드별 비활성 타이머 초기화
         private void InitializeInactivityTimer()
         {
@@ -111,14 +116,14 @@ namespace UmaMacro
             inactivityTimer.Tick += InactivityTimer_Tick;
             inactivityTimer.Start();
             UpdateLastInputTime();
-            
+
 #if DEBUG
             Console.WriteLine($"Debug 모드: {INACTIVITY_CHECK_INTERVAL/1000}초마다 체크, {INACTIVITY_TIMEOUT/1000}초 이상 비활성 시 자동 활성화");
 #else
-            Console.WriteLine($"Release 모드: {INACTIVITY_CHECK_INTERVAL/(60*1000)}분마다 체크, {INACTIVITY_TIMEOUT/(60*1000)}분 이상 비활성 시 자동 활성화");
+            Console.WriteLine($"Release 모드: {INACTIVITY_CHECK_INTERVAL / (60 * 1000)}분마다 체크, {INACTIVITY_TIMEOUT / (60 * 1000)}분 이상 비활성 시 자동 활성화");
 #endif
         }
-        
+
         private void AutoClickTimer_Tick(object sender, EventArgs e)
         {
             // 프로그램이 활성화되어 있을 때만 자동 클릭 수행
@@ -128,7 +133,7 @@ namespace UmaMacro
                 PerformClickAction(787, 800);
             }
         }
-        
+
         // 2025-07-18, 김병현 수정 - 비활성 타이머 이벤트 처리
         private void InactivityTimer_Tick(object sender, EventArgs e)
         {
@@ -136,14 +141,14 @@ namespace UmaMacro
             if (!isActive)
             {
                 uint idleTime = GetIdleTime();
-                
+
                 // 설정된 시간 이상 입력이 없으면 자동 활성화
                 if (idleTime >= INACTIVITY_TIMEOUT)
                 {
 #if DEBUG
                     Console.WriteLine($"Debug: {INACTIVITY_TIMEOUT/1000}초 비활성 감지! 자동 활성화 (대기시간: {idleTime/1000}초)");
 #else
-                    Console.WriteLine($"Release: {INACTIVITY_TIMEOUT/(60*1000)}분 비활성 감지! 자동 활성화 (대기시간: {idleTime/1000}초)");
+                    Console.WriteLine($"Release: {INACTIVITY_TIMEOUT / (60 * 1000)}분 비활성 감지! 자동 활성화 (대기시간: {idleTime / 1000}초)");
 #endif
                     isActive = true;
                     UpdateStatusLabel();
@@ -151,20 +156,20 @@ namespace UmaMacro
                 }
             }
         }
-        
+
         // 2025-07-18, 김병현 수정 - 시스템 대기 시간 확인 메서드
         private uint GetIdleTime()
         {
             LASTINPUTINFO lastInputInfo = new();
             lastInputInfo.cbSize = (uint)Marshal.SizeOf(lastInputInfo);
-            
+
             if (GetLastInputInfo(ref lastInputInfo))
             {
                 return (uint)Environment.TickCount - lastInputInfo.dwTime;
             }
             return 0;
         }
-        
+
         // 2025-07-18, 김병현 수정 - 마지막 입력 시간 업데이트
         private void UpdateLastInputTime()
         {
@@ -174,13 +179,13 @@ namespace UmaMacro
         protected override void WndProc(ref Message m)
         {
             const int WM_HOTKEY = 0x0312; // 핫키 메시지
-            
+
             // 핫키 메시지 디버깅
             if (m.Msg == WM_HOTKEY)
             {
                 Console.WriteLine($"핫키 메시지 받음: ID={m.WParam.ToInt32()}");
             }
-            
+
             // ` 키는 항상 처리 (활성/비활성 토글)
             if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_BACKTICK)
             {
@@ -234,11 +239,20 @@ namespace UmaMacro
             await Task.Delay(50);
 
             SetCursorPos(point.X, point.Y);
-
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            // 2025-07-25, 김병현 수정 - 트레이 모드에서는 폼 닫기 차단
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                this.Visible = false;
+                this.ShowInTaskbar = false;
+                return;
+            }
+            
+            // 실제 종료 시에만 리소스 정리
             ReleaseHook();
             UnregisterHotKey(this.Handle, HOTKEY_ID_BACKTICK); // ` 핫키 해제
             autoClickTimer?.Stop(); // 타이머 정지
@@ -246,6 +260,7 @@ namespace UmaMacro
             // 2025-07-18, 김병현 수정 - 비활성 타이머 정리
             inactivityTimer?.Stop();
             inactivityTimer?.Dispose();
+            notifyIcon1?.Dispose();
             base.OnFormClosing(e);
         }
 
@@ -308,13 +323,13 @@ namespace UmaMacro
 
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
-        
+
         // 2025-07-18, 김병현 수정 - 입력 감지를 위한 추가 API
         [DllImport("user32.dll")]
         private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
-        
+
         #endregion
-        
+
         [StructLayout(LayoutKind.Sequential)]
         private struct LASTINPUTINFO
         {
@@ -324,6 +339,9 @@ namespace UmaMacro
 
         private const int WH_MOUSE_LL = 14; // 핫키 후킹 등록
         private const int WM_LBUTTONDOWN = 0x0201; // 좌클릭 마우스 함수
+        
+        // 2025-07-25, 김병현 수정 - 마우스 움직임 감지를 위한 상수 추가
+        private const int WM_MOUSEMOVE = 0x0200; // 마우스 움직임
 
 
         private static IntPtr SetHook(HookProc proc)
@@ -335,27 +353,41 @@ namespace UmaMacro
 
         private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            if (nCode >= 0 && wParam == (IntPtr)WM_LBUTTONDOWN)
+            if (nCode >= 0)
             {
-                // 좌클릭 마우스 좌표 출력
-                MSLLHOOKSTRUCT hookStruct = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
-                int x = hookStruct.pt.X;
-                int y = hookStruct.pt.Y;
+                // 2025-07-25, 김병현 수정 - 마우스 움직임 감지 추가
+                if (wParam == (IntPtr)WM_MOUSEMOVE)
+                {
+                    // 마우스 움직임 감지 시 매크로 비활성화
+                    var form = Application.OpenForms.OfType<MainForm>().FirstOrDefault();
+                    if (form != null && form.isActive)
+                    {
+                        form.DeactivateMacroOnMouseMove();
+                    }
+                }
+                else if (wParam == (IntPtr)WM_LBUTTONDOWN)
+                {
+                    // 좌클릭 마우스 좌표 출력
+                    MSLLHOOKSTRUCT hookStruct = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
+                    int x = hookStruct.pt.X;
+                    int y = hookStruct.pt.Y;
 
-                // 핫키 메시지 출력
-                Console.WriteLine($"Mouse clicked at: X={x}, Y={y}");
+                    // 핫키 메시지 출력
+                    Console.WriteLine($"Mouse clicked at: X={x}, Y={y}");
+                }
             }
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
         }
 
         private void ToggleButton_Click(object sender, EventArgs e) => ToggleMacroState();
-        
+
         // 2025-07-18, 김병현 수정 - 매크로 상태 토글 로직 분리
         private void ToggleMacroState()
         {
             isActive = !isActive;
             UpdateStatusLabel();
-            
+            UpdateTrayIcon();
+
             if (isActive)
             {
                 StartMacro();
@@ -365,25 +397,114 @@ namespace UmaMacro
                 StopMacro();
             }
         }
-        
+
         // 2025-07-18, 김병현 수정 - 매크로 시작 메서드
         private void StartMacro()
         {
             StartHook();
             autoClickTimer.Start();
         }
-        
+
         // 2025-07-18, 김병현 수정 - 매크로 중지 메서드
         private void StopMacro()
         {
             ReleaseHook();
             autoClickTimer.Stop();
         }
-        
+
         // 2025-07-18, 김병현 수정 - 상태 라벨 업데이트 메서드 분리
         private void UpdateStatusLabel()
         {
             label1.Text = isActive ? "활성" : "비활성";
+        }
+
+        // 2025-07-25, 김병현 수정 - 마우스 움직임 감지 시 매크로 비활성화 메서드
+        public void DeactivateMacroOnMouseMove()
+        {
+            if (isActive)
+            {
+                Console.WriteLine("마우스 움직임 감지! 매크로 비활성화");
+                isActive = false;
+                UpdateStatusLabel();
+                UpdateTrayIcon();
+                StopMacro();
+            }
+        }
+
+        // 2025-07-25, 김병현 수정 - 트레이 아이콘 설정
+        private void SetupTrayIcon()
+        {
+            // 기본 아이콘 설정 (시스템 아이콘 사용)
+            notifyIcon1.Icon = SystemIcons.Application;
+            UpdateTrayIcon();
+            
+            // 시작 시 트레이로 최소화
+            this.WindowState = FormWindowState.Minimized;
+            this.ShowInTaskbar = false;
+            this.Visible = false;
+        }
+
+        // 2025-07-25, 김병현 수정 - 트레이 아이콘 텍스트 업데이트
+        private void UpdateTrayIcon()
+        {
+            활성비활성ToolStripMenuItem.Text = isActive ? "비활성화" : "활성화";
+            notifyIcon1.Text = $"우마컨트롤러 - {(isActive ? "활성" : "비활성")}";
+        }
+
+        // 2025-07-25, 김병현 수정 - 트레이 아이콘 더블클릭 이벤트
+        private void NotifyIcon1_DoubleClick(object sender, EventArgs e)
+        {
+            ShowForm();
+        }
+
+        // 2025-07-25, 김병현 수정 - 트레이 메뉴 활성/비활성 클릭
+        private void 활성비활성ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ToggleMacroState();
+        }
+
+        // 2025-07-25, 김병현 수정 - 트레이 메뉴 종료 클릭
+        private void 종료ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExitApplication();
+        }
+
+        // 2025-07-25, 김병현 수정 - 폼 표시
+        private void ShowForm()
+        {
+            this.Visible = true;
+            this.WindowState = FormWindowState.Normal;
+            this.ShowInTaskbar = true;
+            this.Activate();
+        }
+
+        // 2025-07-25, 김병현 수정 - 폼 크기 변경 이벤트
+        private void MainForm_Resize(object sender, EventArgs e)
+        {
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                this.Visible = false;
+                this.ShowInTaskbar = false;
+            }
+        }
+
+        // 2025-07-25, 김병현 수정 - 폼 닫기 이벤트 재정의
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                this.Visible = false;
+                this.ShowInTaskbar = false;
+                return;
+            }
+        }
+
+        // 2025-07-25, 김병현 수정 - 애플리케이션 완전 종료
+        private void ExitApplication()
+        {
+            notifyIcon1.Visible = false;
+            Application.Exit();
         }
 
         [StructLayout(LayoutKind.Sequential)]
